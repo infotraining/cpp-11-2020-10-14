@@ -140,4 +140,6 @@ TEST_CASE("auto declaration syntax")
 TEST_CASE("streams")
 {
     auto& stream = std::cout;
+
+    stream << 1 << "\n";
 }
