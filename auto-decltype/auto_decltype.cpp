@@ -3,6 +3,8 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
 
 using namespace std;
 
@@ -142,4 +144,110 @@ TEST_CASE("streams")
     auto& stream = std::cout;
 
     stream << 1 << "\n";
+}
+
+TEST_CASE("decltype")
+{
+    std::map<std::string, float> math_constants = { {"pi", 3.14f}, { "e", 2.71f } };
+
+    auto a_map = math_constants;
+    decltype(math_constants) d_map;
+
+    REQUIRE(d_map.size() == 0);
+    static_assert(
+        std::is_same<std::map<std::string, float>, decltype(d_map)>::value, "Error");
+
+    using RefItemT = decltype(d_map[std::declval<std::string>()]);  
+    REQUIRE(d_map.size() == 0);  
+}
+
+template <typename T>
+auto multiply(const T& a, const T& b) -> decltype(a * b)
+{
+    return a * b;
+}
+
+struct Vector2D
+{
+    double x, y;
+};
+
+// scalar multiplication
+double operator*(const Vector2D& a, const Vector2D& b)
+{
+    return a.x * b.x + a.y * b.y;
+}
+
+TEST_CASE("multiply")
+{
+    Vector2D v1{1.0, 2.0};
+    Vector2D v2{2.0, 3.0};
+
+    REQUIRE(multiply(v1, v2) == Approx(8.0));
+}
+
+TEST_CASE("set")
+{
+    int x = 10;
+    int y = 20;
+
+    auto compare_by_value = [](int* a, int* b) { return *a < *b; };
+
+    std::set<int*, decltype(compare_by_value)> pointers_set({&x, &y}, compare_by_value);
+
+    for(const auto& ptr : pointers_set)
+    {
+        std::cout << ptr << " - " << *ptr << "\n";
+    }
+}
+
+TEST_CASE("Modern C++")
+{
+    auto i1 = 10;
+    int i2 = 10;    
+}
+
+template <typename T>
+auto add(const T& a, const T& b) 
+{
+    return a + b;
+}
+
+auto describe(int value)
+{
+    if (value % 2 == 0)
+        return "even"s;
+    else
+        return "odd"s;
+}
+
+auto factorial(int n)
+{
+    if (n == 1)
+        return 1;
+    return factorial(n-1) * n;
+}    
+
+TEST_CASE("new syntax for function")
+{
+    auto lambda = [](int a, int b) -> int { return a + b; };
+}
+
+std::map<int, std::string> dictionary = { {1, "one"}, {2, "two"} };
+
+auto get_mapped_value(decltype(dictionary)& m, decltype(dictionary)::key_type key)
+{
+    return m.at(key);
+}
+
+decltype(auto) get_mapped_ref(std::map<int, std::string>& m, int key)
+{
+    return m.at(key);
+}
+
+TEST_CASE("auto vs. decltype(auto)")
+{    
+    get_mapped_ref(dictionary, 1).append("!");
+
+    REQUIRE(dictionary[1] == "one!");
 }
