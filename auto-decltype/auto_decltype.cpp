@@ -136,3 +136,8 @@ TEST_CASE("auto declaration syntax")
         auto a4 = {1, 2, 3}; // std::initializer_list<int>
     }
 }
+
+TEST_CASE("streams")
+{
+    auto& stream = std::cout;
+}
