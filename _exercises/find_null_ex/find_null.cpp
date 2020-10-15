@@ -9,7 +9,11 @@
 
 using namespace std;
 
-// TODO
+template <typename Container>
+auto find_null(Container& container) -> decltype(std::begin(container)) 
+{
+    return std::find(std::begin(container), std::end(container), nullptr);
+}
 
 TEST_CASE("find_null description")
 {
