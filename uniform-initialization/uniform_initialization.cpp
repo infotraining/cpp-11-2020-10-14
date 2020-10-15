@@ -8,12 +8,12 @@ using namespace Catch::Matchers;
 
 struct Vector2D
 {
-    int x{1};
-    int y{0};
+    int x {1};
+    int y {0};
 
     Vector2D(int x, int y)
         : x(x)
-        , y{y}
+        , y {y}
     {
     }
 };
@@ -38,12 +38,12 @@ TEST_CASE("uniform initialization")
     SECTION("C++11")
     {
         int x1 = 1;
-        int x2{10};
-        int x3{};
-        int* ptr1{}; // int* ptr1 = nullptr;
+        int x2 {10};
+        int x3 {};
+        int* ptr1 {}; // int* ptr1 = nullptr;
 
         int tab[3] = {1, 2, 3};
-        Vector2D vec{1, 2};
+        Vector2D vec {1, 2};
 
         const std::vector<int> data = {1, 2, 3};
     }
@@ -58,9 +58,9 @@ struct Aggregate
     void print() const
     {
         std::cout << "Aggregate{" << a << ", " << b << ", { ";
-        for(const auto& c : coord)
+        for (const auto& c : coord)
             std::cout << c << " ";
-        std::cout << "}, " << name << "}\n"; 
+        std::cout << "}, " << name << "}\n";
     }
 };
 
@@ -69,7 +69,7 @@ struct GreaterThan
     int value;
 
     GreaterThan() = delete; // user-declared
-    
+
     bool operator()(int v) const
     {
         return v > value;
@@ -78,53 +78,55 @@ struct GreaterThan
 
 TEST_CASE("Aggregate initialization")
 {
-    Aggregate agg1{1, 2, {3.14, 2.71, 1.99}, "agg1"};
+    Aggregate agg1 {1, 2, {3.14, 2.71, 1.99}, "agg1"};
     agg1.print();
-    Aggregate agg2{};
+    Aggregate agg2 {};
     agg2.print();
 
     //GreaterThan gt1;
-    GreaterThan gt_than_zero{};
+    GreaterThan gt_than_zero {};
     REQUIRE(gt_than_zero(20));
 }
 
 uint64_t generate_id()
 {
-    static uint64_t id{};
+    static uint64_t id {};
     return ++id;
 }
 
 struct Data
 {
-    const uint64_t id{generate_id()};
-    std::vector<int> data{1, 2, 3};
+    const uint64_t id {generate_id()};
+    std::vector<int> data {1, 2, 3};
 
     Data() = default;
 
-    Data(const std::vector<int>& v) : data{v}
-    {        
-    }     
+    Data(const std::vector<int>& v)
+        : data {v}
+    {
+    }
 };
 
 TEST_CASE("Data")
 {
     Data d;
     REQUIRE(d.id == 1);
-    REQUIRE(d.data == vector<int>{1, 2, 3});
+    REQUIRE(d.data == vector<int> {1, 2, 3});
 
     Data other({6, 6, 5});
     REQUIRE(other.id == 2);
-    REQUIRE(other.data == vector<int>{6, 6, 5});
+    REQUIRE(other.data == vector<int> {6, 6, 5});
 
-    uint64_t id{generate_id()};
+    uint64_t id {generate_id()};
 }
 
 class DataSet
 {
     int* array_;
     size_t size_;
+
 public:
-     DataSet(size_t size)
+    DataSet(size_t size)
         : array_ {new int[size]}
         , size_ {size}
     {
@@ -132,7 +134,8 @@ public:
     }
 
     DataSet(std::initializer_list<int> lst)
-        : array_{new int[lst.size()]}, size_{lst.size()}
+        : array_ {new int[lst.size()]}
+        , size_ {lst.size()}
     {
         std::copy(lst.begin(), lst.end(), array_);
     }
@@ -161,10 +164,9 @@ public:
     }
 };
 
-
 TEST_CASE("std::initializer_list")
 {
-    std::vector<int> vec1{1, 2, 3}; // std::vector<int>(std::initializer_list<int>)
+    std::vector<int> vec1 {1, 2, 3}; // std::vector<int>(std::initializer_list<int>)
     std::vector<int> vec2 = {1, 2, 3}; // std::vector<int>(std::initializer_list<int>)
 
     DataSet ds1 = {1, 2, 3};
@@ -178,10 +180,10 @@ TEST_CASE("overloading constructors with std::initializer_list")
 {
     DataSet ds1(10); // [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-    DataSet ds2{10}; // [10]
+    DataSet ds2 {10}; // [10]
 
     std::vector<int> vec1(3, 1); // [1, 1, 1]
-    std::vector<int> vec2{3, 1}; // [3, 1]
+    std::vector<int> vec2 {3, 1}; // [3, 1]
 
-    std::vector<std::string> vec3{3, "text"}; // ["text", "text", "text"]
+    std::vector<std::string> vec3 {3, "text"}; // ["text", "text", "text"]
 }
