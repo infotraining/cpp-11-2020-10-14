@@ -1,5 +1,7 @@
 #include "catch.hpp"
+#include "gadget.hpp"
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -35,122 +37,6 @@ TEST_CASE("refences binding")
     } // end of life for rvref_full_name -> temp object
 }
 
-struct Gadget
-{
-    int value {};
-    std::string name {};
-
-    Gadget() = default;
-
-    Gadget(int v)
-        : value {v}
-    {
-        cout << "Gadget(" << value << ")\n";
-    }
-
-    Gadget(std::string n) : name{std::move(n)}
-    {        
-        cout << "Gadget(" << value << ", " << name << ")\n";
-    }
-
-    Gadget(int v, std::string n)
-        : value {std::move(v)}
-        , name {std::move(n)}
-    {
-        cout << "Gadget(" << value << ", " << name << ")\n";
-    }
-
-    void use() const
-    {
-        cout << "Using Gadget(" << value << ")\n";
-    }
-
-    ~Gadget()
-    {
-        cout << "~Gadget(" << value << ", " << name << ")\n";
-    }
-};
-
-template <typename T>
-class UniquePtr
-{
-    T* ptr_;
-
-public:
-    explicit UniquePtr(T* ptr)
-        : ptr_ {ptr}
-    {
-    }
-
-    UniquePtr(const UniquePtr&) = delete;
-    UniquePtr& operator=(const UniquePtr&) = delete;
-
-    // move constructor
-    UniquePtr(UniquePtr&& other)
-        : ptr_ {other.ptr_}
-    {
-        other.ptr_ = nullptr;
-    }
-
-    // move assignment operator
-    UniquePtr& operator=(UniquePtr&& other)
-    {
-        if (this != &other)
-        {
-            delete ptr_;
-            ptr_ = other.ptr_;
-            other.ptr_ = nullptr;
-        }
-
-        return *this;
-    }
-
-    ~UniquePtr()
-    {
-        delete ptr_;
-    }
-
-    explicit operator bool() const
-    {
-        return ptr_ != nullptr;
-    }
-
-    T* operator->() const
-    {
-        return ptr_;
-    }
-
-    T& operator*() const
-    {
-        return *ptr_;
-    }
-
-    T* get() const
-    {
-        return ptr_;
-    }
-};
-
-TEST_CASE("unique pointer")
-{
-    SECTION("move constructor")
-    {
-        UniquePtr<Gadget> ptr_g1 {new Gadget(1, "ipad")};
-        UniquePtr<Gadget> ptr_g2 = std::move(ptr_g1); // explicit move on lvalue
-        ptr_g2->use();
-    }
-
-    cout << "\n\n";
-
-    SECTION("move assignment")
-    {
-        UniquePtr<Gadget> ptr_g1 {new Gadget(1, "ipad")};
-
-        ptr_g1 = UniquePtr<Gadget> {new Gadget(42, "smartphone")}; // implicit move of rvalue
-        ptr_g1->use();
-    }
-} // ptr_g1 will destroy ipad
-
 template <typename T>
 void foo(T& arg)
 {
@@ -161,25 +47,11 @@ TEST_CASE("reference collapsing")
 {
     int x = 10;
     foo<int&>(x);
+
+    foo<int&&>(x);
 }
 
-template <typename T, typename Arg>
-UniquePtr<T> make_unique_ptr(Arg&& arg)
-{
-    puts(__PRETTY_FUNCTION__);
-    return UniquePtr<T>(new T(std::forward<Arg>(arg)));
-}
-
-TEST_CASE("perfect forwarding")
-{
-    string name = "smartwatch";
-    UniquePtr<Gadget> ptr_sw = make_unique_ptr<Gadget>(name);
-    
-    UniquePtr<Gadget> ptr_g = make_unique_ptr<Gadget>("tablet");
-    ptr_g->use();
-}
-
-TEST_CASE("auto + &&")
+TEST_CASE("universal reference - auto&&")
 {
     auto&& universal_ref1 = 42; // int&&
 
@@ -187,14 +59,13 @@ TEST_CASE("auto + &&")
     auto&& universal_ref2 = x; // int&
 }
 
-
 struct X
 {
     int id_;
     std::vector<int> vec_;
-    UniquePtr<Gadget> ptr_;
+    std::unique_ptr<Gadget> ptr_;
 
-    X(int id, const std::vector<int>& vec, UniquePtr<Gadget> ptr)
+    X(int id, const std::vector<int>& vec, std::unique_ptr<Gadget> ptr)
         : id_ {id}
         , vec_ {vec}
         , ptr_ {std::move(ptr)}
@@ -221,7 +92,7 @@ struct X
 
 TEST_CASE("X & move semantics")
 {
-    auto lvalue_ptr = UniquePtr<Gadget> {new Gadget(665, "ipad")};
+    auto lvalue_ptr = std::unique_ptr<Gadget> {new Gadget(665, "ipad")};
     X x1 {42, {1, 2, 3}, std::move(lvalue_ptr)};
     x1.ptr_->use();
     REQUIRE(x1.vec_ == std::vector<int> {1, 2, 3});
@@ -261,6 +132,9 @@ struct Data
     std::vector<int> data_;
     std::string name_;
 
+    //////////////////////////////////////
+    // optimal efficiency - but cumbersome
+
     // Data(std::vector<int>&& data_param, const std::string& name_param)
     //     : data_{std::move(data_param)}, name_{name_param}
     // {
@@ -271,8 +145,10 @@ struct Data
     // {
     // }
 
+    // simple & efficient enough - very good compromise
     Data(std::vector<int> data_param, std::string name_param)
-        : data_{std::move(data_param)}, name_{std::move(name_param)}
+        : data_ {std::move(data_param)}
+        , name_ {std::move(name_param)}
     {
     }
 
@@ -281,13 +157,13 @@ struct Data
     Data(Data&&) = default;
     Data& operator=(Data&&) = default;
 
-    ~Data() { std::cout << "~Data()\n"; }
+    ~Data() { std::cout << "~Data()\n"; } // because of it - rule of 5!!!
 };
 
-TEST_CASE("Data")
+TEST_CASE("Data - 1")
 {
     string name = "d1";
-    Data d1{{1, 2, 3}, name};
+    Data d1 {{1, 2, 3}, name};
 
     std::vector<int> vec = {1, 2, 3};
     Data alt_d1(vec, "alt_d1");
@@ -297,12 +173,12 @@ TEST_CASE("Data")
     REQUIRE(d1.data_.size() == 0);
 }
 
-TEST_CASE("Data2")
+TEST_CASE("Data - 2")
 {
     Data* d1;
     {
         string name = "d1";
-        d1 = new Data{{1, 2, 3}, std::move(name)};
+        d1 = new Data {{1, 2, 3}, std::move(name)};
     }
     cout << d1->name_;
 
@@ -312,39 +188,52 @@ TEST_CASE("Data2")
     delete d1;
 }
 
-TEST_CASE("Data3")
+TEST_CASE("Data - 3")
 {
     std::cout << "\n---------------\n\n";
 
-    std::string name = "dgjadshgjlsdfjksfdhgjklsdfh gjh gjlkhdfkljh1";
-    std::cout << "name& " << (long long*) &name << std::endl;
-    std::cout << "name.data& " << (long long*) name.c_str() << std::endl;
-    
-    Data d1{{1, 2, 3}, std::move(name)};
+    std::string name = "very long text very long text very long text very long text";
+    std::cout << "name& " << (long long*)&name << std::endl;
+    std::cout << "name.data& " << (long long*)name.c_str() << std::endl;
 
-    std::cout << "d1 name& " << (long long*) &d1.name_ << std::endl;
-    std::cout << "d1 name.data& " << (long long*) d1.name_.c_str() << std::endl;
+    Data d1 {{1, 2, 3}, std::move(name)};
+
+    std::cout << "d1 name& " << (long long*)&d1.name_ << std::endl;
+    std::cout << "d1 name.data& " << (long long*)d1.name_.c_str() << std::endl;
 
     std::cout << "\n---------------\n\n";
 }
+
+////////////////////////////////////////////////////////
+// Matrix example
 
 namespace legacy_code
 {
     struct Matrix
     {
-        std::vector<int> rows;
+        std::vector<std::vector<int>> data;
     };
 
     Matrix* create_matrix()
     {
-        return new Matrix {{1, 2, 3}};
+        Matrix* m = new Matrix {{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}};
+
+        return m;
     }
 
     void matrix_user()
     {
         Matrix* m = create_matrix();
 
-        m->rows.size();
+        for (std::vector<std::vector<int>>::const_iterator it_row = m->data.begin(); it_row != m->data.end(); ++it_row)
+        {
+            std::cout << "[ ";
+            for (std::vector<int>::const_iterator it = it_row->begin(); it != it_row->end(); ++it)
+            {
+                std::cout << *it << " ";
+            }
+            std::cout << "]\n";
+        }
 
     } // memory_leak
 }
@@ -353,19 +242,73 @@ namespace modern_code
 {
     struct Matrix
     {
-        std::vector<int> rows;
+        std::vector<std::vector<int>> data;
+
+        Matrix(std::initializer_list<std::vector<int>> lst)
+            : data {lst}
+        {
+        }
+
+        size_t rows() const
+        {
+            return data.size();
+        }
+
+        auto begin()
+        {
+            return data.begin();
+        }
+
+        auto end()
+        {
+            return data.end();
+        }
+
+        auto begin() const
+        {
+            return data.begin();
+        }
+
+        auto end() const
+        {
+            return data.end();
+        }
     };
 
     Matrix create_matrix()
     {
-        return Matrix {{1, 2, 3}};
+        return Matrix {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
     }
 
     void matrix_user()
     {
         Matrix m = create_matrix();
+
+        for (const auto& rows : m.data)
+        {
+            std::cout << "[ ";
+            for (const auto& item : rows)
+            {
+                std::cout << item << " ";
+            }
+            std::cout << "]\n";
+        }
     }
 }
+
+TEST_CASE("matrix")
+{
+    std::cout << "\n";
+
+    legacy_code::matrix_user();
+
+    std::cout << "\n";
+
+    modern_code::matrix_user();
+}
+
+////////////////////////////////////////////////
+// call wrapper - perfect forwarding
 
 template <typename F, typename Arg>
 void call(F&& f, Arg&& arg)
@@ -384,5 +327,5 @@ TEST_CASE("call_wrapper")
     call(foobar, 42);
 
     int x = 665;
-    call(foobar, x);    
+    call(foobar, x);
 }
