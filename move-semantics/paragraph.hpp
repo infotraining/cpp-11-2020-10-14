@@ -23,7 +23,7 @@ namespace LegacyCode
             std::strcpy(buffer_, "Default text!");
         }
 
-        Paragraph(const char* txt) : buffer_(new char[1024])
+        Paragraph(const char* txt, size_t buffer_size = 1024) : buffer_(new char[buffer_size])
         {            
             std::strcpy(buffer_, txt);
             std::cout << "Paragraph(" << buffer_ << ")\n";

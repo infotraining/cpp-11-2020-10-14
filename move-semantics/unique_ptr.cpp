@@ -85,11 +85,11 @@ TEST_CASE("unique pointer")
 ////////////////////////////////////////////////////////////
 // perfect forwarding
 
-template <typename T, typename Arg>
-UniquePtr<T> make_unique_ptr(Arg&& arg)
+template <typename T, typename... Args>
+UniquePtr<T> make_unique_ptr(Args&&... args)
 {
     puts(__PRETTY_FUNCTION__);
-    return UniquePtr<T>(new T(std::forward<Arg>(arg)));
+    return UniquePtr<T>(new T(std::forward<Args>(args)...));
 }
 
 TEST_CASE("perfect forwarding")
@@ -97,6 +97,9 @@ TEST_CASE("perfect forwarding")
     std::string name = "smartwatch";
     UniquePtr<Gadget> ptr_sw = make_unique_ptr<Gadget>(name);
     
-    UniquePtr<Gadget> ptr_g = make_unique_ptr<Gadget>("tablet");
+    UniquePtr<Gadget> ptr_g = make_unique_ptr<Gadget>(1, "tablet");
     ptr_g->use();
+
+    UniquePtr<Gadget> ptr_g2 = make_unique_ptr<Gadget>();
+    ptr_g2->use();
 }

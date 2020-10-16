@@ -18,4 +18,6 @@ TEST_CASE("noexcept")
     std::cout << "\n";
     vec.push_back(Paragraph("e"));
     std::cout << "\n";
+    vec.emplace_back("f", 2048);
+
 }

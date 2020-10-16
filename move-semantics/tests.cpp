@@ -310,24 +310,31 @@ TEST_CASE("matrix")
 ////////////////////////////////////////////////
 // call wrapper - perfect forwarding
 
-template <typename F, typename Arg>
-void call(F&& f, Arg&& arg)
+template <typename F, typename... Args>
+void call(F&& f, Args&&... args)
 {
-    arg *= 2;
-    f(std::forward<Arg>(arg));
+    //arg *= 2;
+    (..., (args *= 2));  // fold expression
+    
+    f(std::forward<Args>(args)...);
 }
 
-void foobar(int x)
+void foobar1(int x)
 {
     std::cout << "foobar(" << x << ")\n";
 }
 
+void foobar2(int x, double d)
+{
+    std::cout << "foobar(" << x << ", " << d << ")\n";
+}
+
 TEST_CASE("call_wrapper")
 {
-    call(foobar, 42);
+    call(foobar1, 42);
 
     int x = 665;
-    call(foobar, x);
+    call(foobar2, x, 3.14);
 }
 
 std::vector<int> create_data()
