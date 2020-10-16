@@ -17,14 +17,14 @@ public:
     UniquePtr& operator=(const UniquePtr&) = delete;
 
     // move constructor
-    UniquePtr(UniquePtr&& other)
+    UniquePtr(UniquePtr&& other) noexcept
         : ptr_ {other.ptr_}
     {
         other.ptr_ = nullptr;
     }
 
     // move assignment operator
-    UniquePtr& operator=(UniquePtr&& other)
+    UniquePtr& operator=(UniquePtr&& other) noexcept
     {
         if (this != &other)
         {
@@ -36,7 +36,7 @@ public:
         return *this;
     }
 
-    ~UniquePtr()
+    ~UniquePtr() noexcept
     {
         delete ptr_;
     }

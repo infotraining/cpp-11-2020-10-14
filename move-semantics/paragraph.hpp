@@ -17,7 +17,6 @@ namespace LegacyCode
             std::swap(buffer_, p.buffer_);
         }
         
-
     public:
         Paragraph() : buffer_(new char[1024])
         {
@@ -25,13 +24,15 @@ namespace LegacyCode
         }
 
         Paragraph(const char* txt) : buffer_(new char[1024])
-        {
+        {            
             std::strcpy(buffer_, txt);
+            std::cout << "Paragraph(" << buffer_ << ")\n";
         }
 
         Paragraph(const Paragraph& p) : buffer_(new char[1024])
         {
             std::strcpy(buffer_, p.buffer_);
+            std::cout << "Paragraph(cc: " << buffer_ << ")\n";
         }
 
         Paragraph& operator=(const Paragraph& p)
@@ -43,19 +44,21 @@ namespace LegacyCode
         }
 
         // move contructor
-        Paragraph(Paragraph&& p) : buffer_(p.buffer_)
+        Paragraph(Paragraph&& p) noexcept : buffer_(p.buffer_)
         {
             p.buffer_ = nullptr;
+
+            std::cout << "Paragraph(mv: " << buffer_ << ")\n";
         }
 
         // move assignment
-        Paragraph& operator=(Paragraph&& p)
+        Paragraph& operator=(Paragraph&& p) noexcept
         {
             if(this != &p)
             {
                 delete[] buffer_;
                 buffer_ = p.buffer_;
-                p.buffer_  = nullptr;
+                p.buffer_ = nullptr;
             }
 
             return *this;
@@ -84,8 +87,9 @@ namespace LegacyCode
             std::cout << "Rendering text '" << buffer_ << "' at: [" << posx << ", " << posy << "]" << std::endl;
         }
 
-        virtual ~Paragraph()
+        virtual ~Paragraph() noexcept
         {
+            std::cout << "~Paragraph(" << (buffer_ ? buffer_ : "after move") << ")\n";
             delete[] buffer_;
         }
     };
