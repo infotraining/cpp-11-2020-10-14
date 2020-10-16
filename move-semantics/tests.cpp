@@ -72,10 +72,10 @@ struct X
     {
     }
 
-    // X(X&& other)
-    //     : id_{other.id_}, vec_{std::move(other.vec_)}, ptr_{std::move(other.ptr_)}
-    // {
-    // }
+    X(X&& other) noexcept
+        : id_{other.id_}, vec_{std::move(other.vec_)}, ptr_{std::move(other.ptr_)}
+    {
+    }
 
     // X& operator=(X&& other)
     // {
@@ -328,4 +328,14 @@ TEST_CASE("call_wrapper")
 
     int x = 665;
     call(foobar, x);
+}
+
+std::vector<int> create_data()
+{
+    return std::vector<int>(1'000'000, -1);
+}
+
+TEST_CASE("prvalue + function")
+{
+    std::vector<int> vec = create_data();
 }

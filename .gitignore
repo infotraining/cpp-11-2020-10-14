@@ -173,3 +173,4 @@ $RECYCLE.BIN/
 *.sublime-project
 doc_pl/_build/*
 doc_en/_build/*
+*.db
