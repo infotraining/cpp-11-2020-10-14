@@ -1,9 +1,14 @@
 # Szkolenie C++11/14 - Motorola #
 
+## Ankieta
+
+* https://forms.gle/vtr1BJyg8CNeJfu3A
+
 ## Docs
 
 * https://infotraining.bitbucket.io/cpp-11
 * https://gitpitch.com/infotraining-dev/cpp-11/develop?grs=bitbucket&p=slides_pl#/
+* https://gitpitch.com/infotraining-dev/cpp-thd/develop?grs=bitbucket&p=slides_pl#/
 
 ## Maszyna wirtualna (SSH)
 
